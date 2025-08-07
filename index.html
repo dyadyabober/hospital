@@ -890,6 +890,7 @@
                     <button class="admin-tab" onclick="switchAdminTab('departments')">🏥 По відділеннях</button>
                     <button class="admin-tab" onclick="switchAdminTab('categories')">📋 По категоріях</button>
                     <button class="admin-tab" onclick="switchAdminTab('kitchen')">👨‍🍳 Кухня та склад</button>
+                    <button class="admin-tab" onclick="switchAdminTab('employees')">👥 Співробітники</button>
                     <button class="admin-tab" onclick="switchAdminTab('structure')">⚙️ Налаштування</button>
                     <button class="admin-tab" onclick="switchAdminTab('export')">📤 Експорт даних</button>
                 </div>
@@ -957,6 +958,33 @@
                     
                     <div id="kitchen-info" style="margin-top: 20px;">
                         <!-- Will be filled dynamically -->
+                    </div>
+                </div>
+
+                <!-- Employees Tab -->
+                <div id="employees-tab" class="admin-tab-content">
+                    <h4>👥 Управління співробітниками</h4>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <button class="btn btn-success" onclick="openEmployeeEditor()">➕ Додати співробітника</button>
+                    </div>
+                    
+                    <div style="max-height: 500px; overflow-y: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ПІБ</th>
+                                    <th>Телефон</th>
+                                    <th>Відділення</th>
+                                    <th>Посада</th>
+                                    <th>Роль</th>
+                                    <th>Дії</th>
+                                </tr>
+                            </thead>
+                            <tbody id="employees-table">
+                                <!-- Will be filled dynamically -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -1055,6 +1083,70 @@
             </div>
         </div>
 
+        <!-- Employee Editor Modal -->
+        <div id="employeeModal" class="edit-modal">
+            <div class="edit-modal-content">
+                <span class="close" onclick="closeEmployeeEditor()">&times;</span>
+                <h3 id="employee-modal-title">👥 Додати співробітника</h3>
+                
+                <form id="employee-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="emp-firstname">Ім'я:</label>
+                            <input type="text" id="emp-firstname" placeholder="Введіть ім'я" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="emp-lastname">Прізвище:</label>
+                            <input type="text" id="emp-lastname" placeholder="Введіть прізвище" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="emp-patronymic">По-батькові:</label>
+                            <input type="text" id="emp-patronymic" placeholder="Введіть по-батькові">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="emp-phone">Номер телефону:</label>
+                            <input type="tel" id="emp-phone" placeholder="+380XXXXXXXXX" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="emp-password">Пароль:</label>
+                            <input type="password" id="emp-password" placeholder="Введіть пароль" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="emp-department">Відділення:</label>
+                            <select id="emp-department" required>
+                                <option value="">Оберіть відділення</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="emp-position">Посада:</label>
+                            <input type="text" id="emp-position" placeholder="Лікар, медсестра, тощо" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="emp-role">Роль в системі:</label>
+                            <select id="emp-role" required>
+                                <option value="employee">Співробітник</option>
+                                <option value="doctor">Лікар</option>
+                                <option value="nurse">Медсестра</option>
+                                <option value="admin">Адміністратор</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn btn-success" onclick="saveEmployee()">💾 Зберегти</button>
+                    <button class="btn btn-warning" onclick="closeEmployeeEditor()">❌ Скасувати</button>
+                    <button class="btn btn-danger" id="delete-employee-btn" onclick="deleteEmployee()" style="display: none;">🗑️ Видалити</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Diet Editor Modal -->
         <div id="dietModal" class="edit-modal">
             <div class="edit-modal-content">
@@ -1135,12 +1227,14 @@
         ];
 
         // Mock employee database
-        const employees = {
-            '+380501234567': { password: 'doctor123', name: 'Іванов І.І.', department: 'Кардіологія', role: 'doctor' },
-            '+380507654321': { password: 'nurse456', name: 'Петрова П.П.', department: 'Хірургія', role: 'nurse' },
-            '+380509876543': { password: 'admin789', name: 'Сидорова С.С.', department: 'Терапія', role: 'employee' },
-            '+380500000000': { password: 'admin123', name: 'Адміністратор', department: 'Адміністрація', role: 'admin' }
+        let employees = {
+            '+380501234567': { password: 'doctor123', firstName: 'Іван', lastName: 'Іванов', patronymic: 'Іванович', department: 'Кардіологічне', position: 'Лікар-кардіолог', role: 'doctor' },
+            '+380507654321': { password: 'nurse456', firstName: 'Петра', lastName: 'Петрова', patronymic: 'Петрівна', department: 'Хірургічне', position: 'Медична сестра', role: 'nurse' },
+            '+380509876543': { password: 'admin789', firstName: 'Сидор', lastName: 'Сидоров', patronymic: 'Сидорович', department: 'Терапевтичне', position: 'Лікар-терапевт', role: 'employee' },
+            '+380500000000': { password: 'admin123', firstName: 'Адмін', lastName: 'Адміністратор', patronymic: 'Адміністраторович', department: 'Адміністрація', position: 'Головний адміністратор', role: 'admin' }
         };
+
+        let currentEditEmployeePhone = null;
 
         let currentEditDay = 'monday';
 
@@ -1227,6 +1321,12 @@
             if (savedOrders) {
                 orders = JSON.parse(savedOrders);
             }
+            
+            // Load saved employees
+            const savedEmployees = localStorage.getItem('hospitalEmployees');
+            if (savedEmployees) {
+                employees = JSON.parse(savedEmployees);
+            }
         }
 
         function saveData() {
@@ -1234,6 +1334,7 @@
             localStorage.setItem('hospitalDepartments', JSON.stringify(departments));
             localStorage.setItem('hospitalDiets', JSON.stringify(diets));
             localStorage.setItem('hospitalOrders', JSON.stringify(orders));
+            localStorage.setItem('hospitalEmployees', JSON.stringify(employees));
         }
 
         function updateCurrentTime() {
@@ -1556,14 +1657,15 @@
                 document.getElementById('employee-order-form').classList.add('hidden');
                 document.getElementById('admin-panel').classList.add('hidden');
             } else if (currentUserType === 'employee') {
-                userDisplay.textContent = `👨‍⚕️ ${currentEmployee.name}`;
+                const fullName = `${currentEmployee.lastName} ${currentEmployee.firstName} ${currentEmployee.patronymic}`;
+                userDisplay.textContent = `👨‍⚕️ ${fullName}`;
                 document.getElementById('employee-order-form').classList.remove('hidden');
                 document.getElementById('patient-order-form').classList.add('hidden');
                 document.getElementById('admin-panel').classList.add('hidden');
                 
                 if (currentEmployee.role === 'admin') {
                     document.getElementById('admin-panel').classList.remove('hidden');
-                    userDisplay.textContent = `👑 ${currentEmployee.name} (Адмін)`;
+                    userDisplay.textContent = `👑 ${fullName} (Адмін)`;
                     updateAdminPanel();
                 }
             }
@@ -1727,13 +1829,27 @@
             
             if (!historyDiv) return;
             
-            if (orders.length === 0) {
+            // Filter orders by current user
+            let userOrders = [];
+            if (currentUserType === 'patient') {
+                // For patients, we could filter by some patient identifier if needed
+                // For now, showing all patient orders since we don't have patient authentication
+                userOrders = orders.filter(o => o.type === 'patient');
+            } else if (currentUserType === 'employee' && currentEmployee) {
+                // For employees, show only their orders
+                userOrders = orders.filter(o => 
+                    o.type === 'employee' && 
+                    o.employeeName === currentEmployee.name
+                );
+            }
+            
+            if (userOrders.length === 0) {
                 historyDiv.innerHTML = '<div style="text-align: center; color: #7f8c8d; padding: 20px;">Поки що замовлень немає</div>';
                 return;
             }
             
             let historyHTML = '';
-            orders.slice(-3).reverse().forEach(order => {
+            userOrders.slice(-3).reverse().forEach(order => {
                 const mealTypeText = order.mealOption === 'full' ? 'Повне харчування' : 'Часткове харчування';
                 
                 historyHTML += `
