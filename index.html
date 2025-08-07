@@ -723,6 +723,11 @@
                             Поки що замовлень немає
                         </div>
                     </div>
+                    <div style="margin-top: 15px; text-align: center;">
+                        <button class="btn btn-warning" onclick="clearOrderHistory()" style="font-size: 14px; padding: 8px 16px;">
+                            🗑️ Очистити історію
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -1734,9 +1739,11 @@
                 const pricePerDay = selectedOption === 'full' ? 260 : 200;
                 const totalAmount = pricePerDay * parseInt(daysCount);
                 
+                const fullName = `${currentEmployee.lastName} ${currentEmployee.firstName} ${currentEmployee.patronymic}`;
+                
                 orderData = {
                     type: 'employee',
-                    employeeName: currentEmployee.name,
+                    employeeName: fullName,
                     employeeDepartment: currentEmployee.department,
                     orderDate,
                     dietType,
@@ -1903,6 +1910,8 @@
                 updateCategoryStats();
             } else if (tabName === 'kitchen') {
                 updateKitchenInfo();
+            } else if (tabName === 'employees') {
+                updateEmployeesTable();
             } else if (tabName === 'export') {
                 prepareExportData();
             }
@@ -1911,6 +1920,7 @@
         function updateAdminPanel() {
             updateGeneralStats();
             updateSummaryTable();
+            updateEmployeesTable();
         }
 
         function updateGeneralStats() {
@@ -2861,6 +2871,206 @@ ${order.type === 'patient' ?
             alert(details);
         }
 
+        // Employee management functions
+        function updateEmployeesTable() {
+            const tableBody = document.getElementById('employees-table');
+            if (!tableBody) return;
+
+            if (Object.keys(employees).length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px; color: #7f8c8d;">
+                            Немає співробітників для відображення
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let tableHTML = '';
+            Object.entries(employees).forEach(([phone, emp]) => {
+                const fullName = `${emp.lastName} ${emp.firstName} ${emp.patronymic}`;
+                const roleText = {
+                    'admin': 'Адміністратор',
+                    'doctor': 'Лікар',
+                    'nurse': 'Медсестра',
+                    'employee': 'Співробітник'
+                }[emp.role] || emp.role;
+
+                tableHTML += `
+                    <tr>
+                        <td>${fullName}</td>
+                        <td>${phone}</td>
+                        <td>${emp.department}</td>
+                        <td>${emp.position}</td>
+                        <td>
+                            <span style="padding: 3px 8px; border-radius: 10px; font-size: 12px; font-weight: bold;
+                                ${emp.role === 'admin' ? 'background: rgba(231,76,60,0.2); color: #e74c3c' : 
+                                  emp.role === 'doctor' ? 'background: rgba(52,152,219,0.2); color: #3498db' :
+                                  emp.role === 'nurse' ? 'background: rgba(46,204,113,0.2); color: #27ae60' :
+                                  'background: rgba(149,165,166,0.2); color: #95a5a6'}">
+                                ${roleText}
+                            </span>
+                        </td>
+                        <td>
+                            <button onclick="editEmployee('${phone}')" style="background: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; margin-right: 5px;">
+                                ✏️ Редагувати
+                            </button>
+                            <button onclick="deleteEmployeeConfirm('${phone}')" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                                🗑️ Видалити
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableBody.innerHTML = tableHTML;
+        }
+
+        function openEmployeeEditor() {
+            currentEditEmployeePhone = null;
+            document.getElementById('employee-modal-title').textContent = '👥 Додати співробітника';
+            document.getElementById('delete-employee-btn').style.display = 'none';
+            
+            // Clear form
+            document.getElementById('emp-firstname').value = '';
+            document.getElementById('emp-lastname').value = '';
+            document.getElementById('emp-patronymic').value = '';
+            document.getElementById('emp-phone').value = '';
+            document.getElementById('emp-password').value = '';
+            document.getElementById('emp-department').value = '';
+            document.getElementById('emp-position').value = '';
+            document.getElementById('emp-role').value = 'employee';
+            
+            // Update department options
+            updateEmployeeDepartmentSelect();
+            
+            document.getElementById('employeeModal').style.display = 'block';
+        }
+
+        function editEmployee(phone) {
+            currentEditEmployeePhone = phone;
+            const emp = employees[phone];
+            
+            document.getElementById('employee-modal-title').textContent = '👥 Редагувати співробітника';
+            document.getElementById('delete-employee-btn').style.display = 'inline-block';
+            
+            // Fill form with employee data
+            document.getElementById('emp-firstname').value = emp.firstName;
+            document.getElementById('emp-lastname').value = emp.lastName;
+            document.getElementById('emp-patronymic').value = emp.patronymic;
+            document.getElementById('emp-phone').value = phone;
+            document.getElementById('emp-password').value = emp.password;
+            document.getElementById('emp-department').value = emp.department;
+            document.getElementById('emp-position').value = emp.position;
+            document.getElementById('emp-role').value = emp.role;
+            
+            // Update department options
+            updateEmployeeDepartmentSelect();
+            
+            document.getElementById('employeeModal').style.display = 'block';
+        }
+
+        function closeEmployeeEditor() {
+            document.getElementById('employeeModal').style.display = 'none';
+            currentEditEmployeePhone = null;
+        }
+
+        function updateEmployeeDepartmentSelect() {
+            const select = document.getElementById('emp-department');
+            if (!select) return;
+            
+            select.innerHTML = '<option value="">Оберіть відділення</option>';
+            departments.forEach(dept => {
+                select.innerHTML += `<option value="${dept.name}">${dept.name}</option>`;
+            });
+            
+            // Add Administration if not exists
+            if (!departments.find(d => d.name === 'Адміністрація')) {
+                select.innerHTML += '<option value="Адміністрація">Адміністрація</option>';
+            }
+        }
+
+        function saveEmployee() {
+            const firstName = document.getElementById('emp-firstname').value.trim();
+            const lastName = document.getElementById('emp-lastname').value.trim();
+            const patronymic = document.getElementById('emp-patronymic').value.trim();
+            const phone = document.getElementById('emp-phone').value.trim();
+            const password = document.getElementById('emp-password').value.trim();
+            const department = document.getElementById('emp-department').value;
+            const position = document.getElementById('emp-position').value.trim();
+            const role = document.getElementById('emp-role').value;
+            
+            // Validation
+            if (!firstName || !lastName || !phone || !password || !department || !position) {
+                alert('Будь ласка, заповніть всі обов\'язкові поля');
+                return;
+            }
+            
+            // Check phone format
+            if (!/^\+380\d{9}$/.test(phone)) {
+                alert('Номер телефону має бути у форматі +380XXXXXXXXX');
+                return;
+            }
+            
+            // Check if phone already exists (for new employees or changed phone)
+            if ((!currentEditEmployeePhone || phone !== currentEditEmployeePhone) && employees[phone]) {
+                alert('Співробітник з таким номером телефону вже існує');
+                return;
+            }
+            
+            // Create/update employee
+            const employeeData = {
+                firstName,
+                lastName,
+                patronymic,
+                password,
+                department,
+                position,
+                role
+            };
+            
+            if (currentEditEmployeePhone && phone !== currentEditEmployeePhone) {
+                // Phone changed - delete old entry and create new
+                delete employees[currentEditEmployeePhone];
+            }
+            
+            employees[phone] = employeeData;
+            saveData();
+            updateEmployeesTable();
+            closeEmployeeEditor();
+            
+            const action = currentEditEmployeePhone ? 'оновлено' : 'додано';
+            alert(`Співробітника успішно ${action}!`);
+        }
+
+        function deleteEmployee() {
+            if (!currentEditEmployeePhone) return;
+            
+            const emp = employees[currentEditEmployeePhone];
+            const fullName = `${emp.lastName} ${emp.firstName} ${emp.patronymic}`;
+            
+            if (confirm(`Ви впевнені, що хочете видалити співробітника ${fullName}?`)) {
+                delete employees[currentEditEmployeePhone];
+                saveData();
+                updateEmployeesTable();
+                closeEmployeeEditor();
+                alert('Співробітника видалено!');
+            }
+        }
+
+        function deleteEmployeeConfirm(phone) {
+            const emp = employees[phone];
+            const fullName = `${emp.lastName} ${emp.firstName} ${emp.patronymic}`;
+            
+            if (confirm(`Ви впевнені, що хочете видалити співробітника ${fullName}?`)) {
+                delete employees[phone];
+                saveData();
+                updateEmployeesTable();
+                alert('Співробітника видалено!');
+            }
+        }
+
         function filterByDepartment() {
             const filter = document.getElementById('department-filter').value;
             updateDepartmentStats();
@@ -2872,6 +3082,7 @@ ${order.type === 'patient' ?
             const deptModal = document.getElementById('departmentModal');
             const weeklyMenuModal = document.getElementById('weeklyMenuModal');
             const dietModal = document.getElementById('dietModal');
+            const employeeModal = document.getElementById('employeeModal');
             
             if (event.target == loginModal) {
                 closeLoginModal();
@@ -2884,6 +3095,9 @@ ${order.type === 'patient' ?
             }
             if (event.target == dietModal) {
                 closeDietEditor();
+            }
+            if (event.target == employeeModal) {
+                closeEmployeeEditor();
             }
         }
 
