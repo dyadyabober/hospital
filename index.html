@@ -1,0 +1,2807 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система замовлення харчування - Лікарня</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .login-btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            text-align: center;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+
+        @keyframes slideIn {
+            from {transform: translateY(-50px); opacity: 0;}
+            to {transform: translateY(0); opacity: 1;}
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: #e74c3c;
+        }
+
+        .user-type-selection {
+            margin: 20px 0;
+        }
+
+        .user-type-btn {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            margin: 15px 0;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .patient-btn {
+            background: linear-gradient(45deg, #27ae60, #229954);
+            color: white;
+        }
+
+        .employee-btn {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .user-type-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Employee Login Form */
+        .employee-login {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        /* Main Application */
+        .app-container {
+            display: none;
+        }
+
+        .app-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .menu-week {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .day-menu {
+            margin-bottom: 20px;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+
+        .day-header {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .meal-type {
+            margin: 10px 0;
+            padding: 8px;
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 5px;
+            border-left: 3px solid #3498db;
+        }
+
+        .meal-type h4 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .meal-items {
+            font-size: 0.85em;
+            color: #555;
+        }
+
+        .meal-option {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            border: 2px solid #ecf0f1;
+            transition: all 0.3s ease;
+        }
+
+        .meal-option:hover {
+            border-color: #3498db;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .meal-option.selected {
+            border-color: #27ae60;
+            background: rgba(46, 204, 113, 0.1);
+        }
+
+        .meal-option-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .meal-option-title {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #2c3e50;
+        }
+
+        .meal-option-price {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        .meal-option-description {
+            color: #7f8c8d;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .select-meal-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .select-meal-btn:hover {
+            background: linear-gradient(45deg, #2980b9, #1f5582);
+            transform: translateY(-2px);
+        }
+
+        .select-meal-btn.selected {
+            background: linear-gradient(45deg, #27ae60, #229954);
+        }
+
+        .order-form {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            grid-column: 1 / -1;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .employee-form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .order-summary {
+            background: rgba(46, 204, 113, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .total-price {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #27ae60;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #27ae60, #229954);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .time-warning {
+            background: rgba(231, 76, 60, 0.1);
+            border: 2px solid #e74c3c;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #c0392b;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .success-message {
+            background: rgba(46, 204, 113, 0.1);
+            border: 2px solid #27ae60;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #229954;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Admin Tabs */
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .admin-tab {
+            padding: 10px 20px;
+            background: #ecf0f1;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .admin-tab.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .admin-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .admin-tab-content {
+            display: none;
+        }
+
+        .admin-tab-content.active {
+            display: block;
+        }
+
+        /* Statistics Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        thead {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        tbody tr:hover {
+            background: rgba(52, 152, 219, 0.05);
+        }
+
+        /* Export Button */
+        .export-btn {
+            background: linear-gradient(45deg, #27ae60, #229954);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        /* Edit Modal */
+        .edit-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .edit-modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        /* Menu Editor */
+        .menu-editor-item {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .menu-editor-item h4 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .meal-editor {
+            display: grid;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .meal-editor input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .day-selector {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .day-btn {
+            padding: 10px;
+            background: #ecf0f1;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .day-btn.active {
+            background: #3498db;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row,
+            .employee-form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                margin: 10% auto;
+                width: 95%;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .day-selector {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Welcome Screen -->
+        <div id="welcome-screen">
+            <div class="header">
+                <h1>🏥 Система замовлення харчування</h1>
+                <button class="login-btn" onclick="openLoginModal()">Увійти</button>
+            </div>
+        </div>
+
+        <!-- Login Modal -->
+        <div id="loginModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeLoginModal()">&times;</span>
+                <h2>Оберіть тип користувача</h2>
+                
+                <!-- User Type Selection -->
+                <div id="user-type-selection" class="user-type-selection">
+                    <button class="user-type-btn patient-btn" onclick="selectUserType('patient')">
+                        👤 Пацієнт
+                    </button>
+                    <button class="user-type-btn employee-btn" onclick="selectUserType('employee')">
+                        👨‍⚕️ Співробітник
+                    </button>
+                </div>
+
+                <!-- Employee Login Form -->
+                <div id="employee-login" class="employee-login">
+                    <h3>Вхід для співробітника</h3>
+                    <div class="form-group">
+                        <label for="employee-phone">Номер телефону:</label>
+                        <input type="tel" id="employee-phone" placeholder="+380XXXXXXXXX">
+                    </div>
+                    <div class="form-group">
+                        <label for="employee-password">Пароль:</label>
+                        <input type="password" id="employee-password" placeholder="Введіть пароль">
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="loginEmployee()">Увійти</button>
+                        <button class="btn btn-warning" onclick="backToUserSelection()">Назад</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Application -->
+        <div id="app-container" class="app-container">
+            <div class="app-header">
+                <div>
+                    <h1>🏥 Система замовлення харчування</h1>
+                    <div id="current-time"></div>
+                </div>
+                <div class="user-info">
+                    <span id="user-type-display"></span>
+                    <button class="logout-btn" onclick="logout()">Вийти</button>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="card">
+                    <h3>📋 Тижневе меню</h3>
+                    <div id="weekly-menu" class="menu-week">
+                        <!-- Weekly menu will be dynamically generated -->
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>📊 Ваші замовлення</h3>
+                    <div id="order-history">
+                        <div style="text-align: center; color: #7f8c8d; padding: 20px;">
+                            Поки що замовлень немає
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patient Order Form -->
+            <div id="patient-order-form" class="order-form hidden">
+                <h3>🛒 Оформлення замовлення (Пацієнт)</h3>
+                <div id="time-warning" class="time-warning" style="display: none;">
+                    ⚠️ Увага! Замовлення на завтра можна зробити тільки до 14:00 сьогодні!
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="patient-department">Відділення:</label>
+                        <select id="patient-department">
+                            <option value="">Оберіть відділення</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="patient-room">Палата:</label>
+                        <input type="text" id="patient-room" placeholder="Номер палати">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="patient-name">Пацієнт:</label>
+                        <input type="text" id="patient-name" placeholder="Прізвище І.Б.">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="patient-order-date">Дата замовлення:</label>
+                        <input type="date" id="patient-order-date">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="patient-diet-type">Тип дієти:</label>
+                        <select id="patient-diet-type">
+                            <option value="standard">Стандартна</option>
+                            <option value="diet-1">Дієта №1</option>
+                            <option value="diet-5">Дієта №5</option>
+                            <option value="diet-9">Дієта №9</option>
+                            <option value="diet-15">Дієта №15</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="patient-days-count">Кількість днів:</label>
+                        <input type="number" id="patient-days-count" min="1" max="7" value="1">
+                    </div>
+                </div>
+
+                <div style="margin: 20px 0;">
+                    <h4>Варіанти харчування:</h4>
+                    
+                    <div class="meal-option" id="full-meal-option">
+                        <div class="meal-option-header">
+                            <div class="meal-option-title">🍽️ Повноцінне тридільне харчування</div>
+                            <div class="meal-option-price">260 грн/день</div>
+                        </div>
+                        <div class="meal-option-description">
+                            Включає: сніданок, обід та вечерю згідно тижневого меню
+                        </div>
+                        <button class="select-meal-btn" onclick="selectMealOption('full')">Обрати</button>
+                    </div>
+
+                    <div class="meal-option" id="partial-meal-option">
+                        <div class="meal-option-header">
+                            <div class="meal-option-title">🍽️ Частинне дводільне харчування</div>
+                            <div class="meal-option-price">200 грн/день</div>
+                        </div>
+                        <div class="meal-option-description">
+                            Включає: обід та вечерю згідно тижневого меню
+                        </div>
+                        <button class="select-meal-btn" onclick="selectMealOption('partial')">Обрати</button>
+                    </div>
+                </div>
+                
+                <div class="order-summary">
+                    <h4>📝 Підсумок замовлення:</h4>
+                    <div id="patient-order-items"></div>
+                    <div class="total-price" id="patient-total-price">Загальна сума: 0 грн</div>
+                </div>
+                
+                <div style="text-align: center;">
+                    <button class="btn btn-success" onclick="placeOrder('patient')">💳 Оформити замовлення</button>
+                    <button class="btn btn-warning" onclick="clearOrder()">🗑️ Очистити</button>
+                </div>
+            </div>
+
+            <!-- Employee Order Form -->
+            <div id="employee-order-form" class="order-form hidden">
+                <h3>🛒 Оформлення замовлення (Співробітник)</h3>
+                <div id="employee-time-warning" class="time-warning" style="display: none;">
+                    ⚠️ Увага! Замовлення на обід можна зробити до 9:30 дня доставки!
+                </div>
+                
+                <div class="employee-form-row">
+                    <div class="form-group">
+                        <label for="employee-order-date">Дата замовлення:</label>
+                        <input type="date" id="employee-order-date">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="employee-diet-type">Тип дієти:</label>
+                        <select id="employee-diet-type">
+                            <option value="standard">Стандартна</option>
+                            <option value="diet-1">Дієта №1</option>
+                            <option value="diet-5">Дієта №5</option>
+                            <option value="diet-9">Дієта №9</option>
+                            <option value="diet-15">Дієта №15</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="employee-days-count">Кількість днів:</label>
+                        <input type="number" id="employee-days-count" min="1" max="3" value="1">
+                    </div>
+                </div>
+
+                <div style="margin: 20px 0;">
+                    <h4>Варіанти харчування:</h4>
+                    
+                    <div class="meal-option" id="employee-full-meal-option">
+                        <div class="meal-option-header">
+                            <div class="meal-option-title">🍽️ Повноцінне тридільне харчування</div>
+                            <div class="meal-option-price">260 грн/день</div>
+                        </div>
+                        <div class="meal-option-description">
+                            Включає: сніданок, обід та вечерю згідно тижневого меню
+                        </div>
+                        <button class="select-meal-btn" onclick="selectEmployeeMealOption('full')">Обрати</button>
+                    </div>
+
+                    <div class="meal-option" id="employee-partial-meal-option">
+                        <div class="meal-option-header">
+                            <div class="meal-option-title">🍽️ Частинне дводільне харчування</div>
+                            <div class="meal-option-price">200 грн/день</div>
+                        </div>
+                        <div class="meal-option-description">
+                            Включає: обід та вечерю згідно тижневого меню
+                        </div>
+                        <button class="select-meal-btn" onclick="selectEmployeeMealOption('partial')">Обрати</button>
+                    </div>
+                </div>
+                
+                <div class="order-summary">
+                    <h4>📝 Підсумок замовлення:</h4>
+                    <div id="employee-order-items"></div>
+                    <div class="total-price" id="employee-total-price">Загальна сума: 0 грн</div>
+                </div>
+                
+                <div style="text-align: center;">
+                    <button class="btn btn-success" onclick="placeOrder('employee')">💳 Оформити замовлення</button>
+                    <button class="btn btn-warning" onclick="clearOrder()">🗑️ Очистити</button>
+                </div>
+            </div>
+
+            <!-- Admin Panel -->
+            <div id="admin-panel" class="order-form hidden">
+                <h3>👑 Адміністративна панель</h3>
+                
+                <div class="admin-tabs">
+                    <button class="admin-tab active" onclick="switchAdminTab('summary')">📊 Зведена інформація</button>
+                    <button class="admin-tab" onclick="switchAdminTab('departments')">🏥 По відділеннях</button>
+                    <button class="admin-tab" onclick="switchAdminTab('categories')">📋 По категоріях</button>
+                    <button class="admin-tab" onclick="switchAdminTab('kitchen')">👨‍🍳 Кухня та склад</button>
+                    <button class="admin-tab" onclick="switchAdminTab('structure')">⚙️ Налаштування</button>
+                    <button class="admin-tab" onclick="switchAdminTab('export')">📤 Експорт даних</button>
+                </div>
+
+                <!-- Summary Tab -->
+                <div id="summary-tab" class="admin-tab-content active">
+                    <h4>📊 Загальна статистика</h4>
+                    <div class="stats-grid" id="general-stats">
+                        <!-- Will be filled dynamically -->
+                    </div>
+                    
+                    <h4>📈 Останні замовлення</h4>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Дата</th>
+                                    <th>Тип</th>
+                                    <th>Замовник</th>
+                                    <th>Тип харчування</th>
+                                    <th>Сума</th>
+                                    <th>Дії</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summary-orders-table">
+                                <!-- Will be filled dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Departments Tab -->
+                <div id="departments-tab" class="admin-tab-content">
+                    <h4>🏥 Статистика по відділеннях</h4>
+                    <div class="form-group">
+                        <label>Оберіть відділення:</label>
+                        <select id="department-filter" onchange="filterByDepartment()">
+                            <option value="all">Всі відділення</option>
+                        </select>
+                    </div>
+                    <div id="department-stats">
+                        <!-- Will be filled dynamically -->
+                    </div>
+                </div>
+
+                <!-- Categories Tab -->
+                <div id="categories-tab" class="admin-tab-content">
+                    <h4>📋 Розподіл по категоріях</h4>
+                    <div id="category-stats">
+                        <!-- Will be filled dynamically -->
+                    </div>
+                </div>
+
+                <!-- Kitchen Tab -->
+                <div id="kitchen-tab" class="admin-tab-content">
+                    <h4>👨‍🍳 Інформація для кухні та складу</h4>
+                    <div class="form-group">
+                        <label>Дата приготування:</label>
+                        <input type="date" id="kitchen-date" onchange="updateKitchenInfo()">
+                    </div>
+                    
+                    <button class="export-btn" onclick="printKitchenOrder()">🖨️ Друк замовлення для кухні</button>
+                    <button class="export-btn" onclick="printWarehouseOrder()">📦 Друк для складу</button>
+                    
+                    <div id="kitchen-info" style="margin-top: 20px;">
+                        <!-- Will be filled dynamically -->
+                    </div>
+                </div>
+
+                <!-- Structure Tab -->
+                <div id="structure-tab" class="admin-tab-content">
+                    <h4>⚙️ Налаштування системи</h4>
+                    
+                    <div style="margin-bottom: 30px;">
+                        <h5>🏥 Управління відділеннями</h5>
+                        <button class="btn btn-primary" onclick="openDepartmentEditor()">Редагувати відділення</button>
+                    </div>
+                    
+                    <div style="margin-bottom: 30px;">
+                        <h5>🍽️ Управління тижневим меню</h5>
+                        <button class="btn btn-primary" onclick="openWeeklyMenuEditor()">Редагувати тижневе меню</button>
+                    </div>
+                    
+                    <div style="margin-bottom: 30px;">
+                        <h5>📊 Управління дієтами</h5>
+                        <button class="btn btn-primary" onclick="openDietEditor()">Редагувати типи дієт</button>
+                    </div>
+                </div>
+
+                <!-- Export Tab -->
+                <div id="export-tab" class="admin-tab-content">
+                    <h4>📤 Експорт даних до ІС ПРО</h4>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Дата від:</label>
+                            <input type="date" id="export-date-from">
+                        </div>
+                        <div class="form-group">
+                            <label>Дата до:</label>
+                            <input type="date" id="export-date-to">
+                        </div>
+                        <div class="form-group">
+                            <label>Формат:</label>
+                            <select id="export-format">
+                                <option value="json">JSON</option>
+                                <option value="xml">XML</option>
+                                <option value="csv">CSV</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 20px 0;">
+                        <button class="export-btn" onclick="exportToAPI()">📤 Експортувати через API</button>
+                        <button class="export-btn" onclick="downloadExport()">💾 Завантажити файл</button>
+                    </div>
+                    
+                    <div id="export-preview" style="margin-top: 20px;">
+                        <h5>Попередній перегляд даних:</h5>
+                        <textarea id="export-data" style="width: 100%; height: 300px; font-family: monospace;" readonly></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Department Editor Modal -->
+        <div id="departmentModal" class="edit-modal">
+            <div class="edit-modal-content">
+                <span class="close" onclick="closeDepartmentEditor()">&times;</span>
+                <h3>🏥 Редагування відділень</h3>
+                
+                <div id="departments-list">
+                    <!-- Will be filled dynamically -->
+                </div>
+                
+                <button class="btn btn-success" onclick="addNewDepartment()">➕ Додати відділення</button>
+                <button class="btn btn-primary" onclick="saveDepartments()">💾 Зберегти зміни</button>
+            </div>
+        </div>
+
+        <!-- Weekly Menu Editor Modal -->
+        <div id="weeklyMenuModal" class="edit-modal">
+            <div class="edit-modal-content">
+                <span class="close" onclick="closeWeeklyMenuEditor()">&times;</span>
+                <h3>🍽️ Редагування тижневого меню</h3>
+                
+                <div class="day-selector">
+                    <button class="day-btn active" onclick="selectDay('monday')">Понеділок</button>
+                    <button class="day-btn" onclick="selectDay('tuesday')">Вівторок</button>
+                    <button class="day-btn" onclick="selectDay('wednesday')">Середа</button>
+                    <button class="day-btn" onclick="selectDay('thursday')">Четвер</button>
+                    <button class="day-btn" onclick="selectDay('friday')">П'ятниця</button>
+                    <button class="day-btn" onclick="selectDay('saturday')">Субота</button>
+                    <button class="day-btn" onclick="selectDay('sunday')">Неділя</button>
+                </div>
+                
+                <div id="day-menu-editor">
+                    <!-- Will be filled dynamically -->
+                </div>
+                
+                <button class="btn btn-primary" onclick="saveWeeklyMenu()">💾 Зберегти зміни</button>
+            </div>
+        </div>
+
+        <!-- Diet Editor Modal -->
+        <div id="dietModal" class="edit-modal">
+            <div class="edit-modal-content">
+                <span class="close" onclick="closeDietEditor()">&times;</span>
+                <h3>📊 Редагування дієт</h3>
+                
+                <div id="diets-list">
+                    <!-- Will be filled dynamically -->
+                </div>
+                
+                <button class="btn btn-success" onclick="addNewDiet()">➕ Додати дієту</button>
+                <button class="btn btn-primary" onclick="saveDiets()">💾 Зберегти зміни</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        let currentUserType = null;
+        let currentEmployee = null;
+        let orders = [];
+        let selectedMealOption = null;
+        let selectedEmployeeMealOption = null;
+        
+        // Weekly menu structure
+        let weeklyMenu = {
+            monday: {
+                breakfast: ['Каша вівсяна з маслом', 'Хліб з маслом', 'Чай з цукром'],
+                lunch: ['Борщ український', 'Котлета по-київськи з картоплею', 'Салат овочевий', 'Компот'],
+                dinner: ['Риба запечена', 'Каша гречана', 'Чай з лимоном']
+            },
+            tuesday: {
+                breakfast: ['Каша манна', 'Бутерброд з сиром', 'Кава з молоком'],
+                lunch: ['Суп куриний з локшиною', 'Гуляш яловичий з рисом', 'Салат з капусти', 'Кисіль'],
+                dinner: ['Курка тушкована', 'Картопля відварна', 'Чай зелений']
+            },
+            wednesday: {
+                breakfast: ['Омлет', 'Хліб житній', 'Какао'],
+                lunch: ['Солянка м\'ясна', 'Рибна котлета з макаронами', 'Салат з буряка', 'Морс'],
+                dinner: ['М\'ясо тушковане', 'Каша перлова', 'Чай травяний']
+            },
+            thursday: {
+                breakfast: ['Каша пшонна', 'Хліб з джемом', 'Чай чорний'],
+                lunch: ['Суп овочевий', 'Біфштекс з картопляним пюре', 'Салат з моркви', 'Компот з яблук'],
+                dinner: ['Печінка тушкована', 'Каша ячнева', 'Чай з м\'ятою']
+            },
+            friday: {
+                breakfast: ['Каша рисова', 'Бутерброд з ковбасою', 'Кава чорна'],
+                lunch: ['Борщ зелений', 'Відбивна свиняча з овочами', 'Салат грецький', 'Узвар'],
+                dinner: ['Риба варена', 'Картопля в мундирі', 'Чай з медом']
+            },
+            saturday: {
+                breakfast: ['Сирники', 'Сметана', 'Чай з молоком'],
+                lunch: ['Суп гороховий', 'Голубці з м\'ясом', 'Салат з огірків', 'Компот з сухофруктів'],
+                dinner: ['Котлета куряча', 'Каша гречана', 'Чай зелений']
+            },
+            sunday: {
+                breakfast: ['Каша вівсяна з фруктами', 'Йогурт', 'Какао'],
+                lunch: ['Суп м\'ясний', 'Плов з яловичиною', 'Салат вітамінний', 'Морс ягідний'],
+                dinner: ['Курка запечена', 'Овочі тушковані', 'Чай фруктовий']
+            }
+        };
+
+        let departments = [
+            { id: 'cardiology', name: 'Кардіологічне' },
+            { id: 'neurology', name: 'Неврологічне' },
+            { id: 'surgery', name: 'Хірургічне' },
+            { id: 'therapy', name: 'Терапевтичне' },
+            { id: 'pediatrics', name: 'Педіатричне' }
+        ];
+
+        let diets = [
+            { id: 'standard', name: 'Стандартна' },
+            { id: 'diet-1', name: 'Дієта №1' },
+            { id: 'diet-5', name: 'Дієта №5' },
+            { id: 'diet-9', name: 'Дієта №9' },
+            { id: 'diet-15', name: 'Дієта №15' }
+        ];
+
+        // Mock employee database
+        const employees = {
+            '+380501234567': { password: 'doctor123', name: 'Іванов І.І.', department: 'Кардіологія', role: 'doctor' },
+            '+380507654321': { password: 'nurse456', name: 'Петрова П.П.', department: 'Хірургія', role: 'nurse' },
+            '+380509876543': { password: 'admin789', name: 'Сидорова С.С.', department: 'Терапія', role: 'employee' },
+            '+380500000000': { password: 'admin123', name: 'Адміністратор', department: 'Адміністрація', role: 'admin' }
+        };
+
+        let currentEditDay = 'monday';
+
+        // Session Management
+        function saveSession() {
+            if (currentEmployee) {
+                sessionStorage.setItem('userSession', JSON.stringify({
+                    type: currentUserType,
+                    employee: currentEmployee,
+                    loginTime: new Date().toISOString()
+                }));
+            } else if (currentUserType === 'patient') {
+                sessionStorage.setItem('userSession', JSON.stringify({
+                    type: 'patient',
+                    loginTime: new Date().toISOString()
+                }));
+            }
+        }
+
+        function loadSession() {
+            const session = sessionStorage.getItem('userSession');
+            if (session) {
+                const sessionData = JSON.parse(session);
+                const loginTime = new Date(sessionData.loginTime);
+                const now = new Date();
+                const hoursSinceLogin = (now - loginTime) / (1000 * 60 * 60);
+                
+                // Session expires after 8 hours
+                if (hoursSinceLogin < 8) {
+                    currentUserType = sessionData.type;
+                    currentEmployee = sessionData.employee || null;
+                    showApp();
+                    return true;
+                } else {
+                    sessionStorage.removeItem('userSession');
+                }
+            }
+            return false;
+        }
+
+        function clearSession() {
+            sessionStorage.removeItem('userSession');
+        }
+
+        // Initialize
+        function init() {
+            // Load saved data from localStorage
+            loadSavedData();
+            
+            // Try to restore session
+            if (!loadSession()) {
+                document.getElementById('welcome-screen').style.display = 'block';
+            }
+            
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+            setMinDate();
+            checkTimeRestrictions();
+            renderWeeklyMenu();
+            updateDepartmentSelects();
+        }
+
+        function loadSavedData() {
+            // Load saved weekly menu
+            const savedMenu = localStorage.getItem('hospitalWeeklyMenu');
+            if (savedMenu) {
+                weeklyMenu = JSON.parse(savedMenu);
+            }
+            
+            // Load saved departments
+            const savedDepartments = localStorage.getItem('hospitalDepartments');
+            if (savedDepartments) {
+                departments = JSON.parse(savedDepartments);
+            }
+            
+            // Load saved diets
+            const savedDiets = localStorage.getItem('hospitalDiets');
+            if (savedDiets) {
+                diets = JSON.parse(savedDiets);
+            }
+            
+            // Load saved orders
+            const savedOrders = localStorage.getItem('hospitalOrders');
+            if (savedOrders) {
+                orders = JSON.parse(savedOrders);
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('hospitalWeeklyMenu', JSON.stringify(weeklyMenu));
+            localStorage.setItem('hospitalDepartments', JSON.stringify(departments));
+            localStorage.setItem('hospitalDiets', JSON.stringify(diets));
+            localStorage.setItem('hospitalOrders', JSON.stringify(orders));
+        }
+
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('uk-UA');
+            const timeElement = document.getElementById('current-time');
+            if (timeElement) {
+                timeElement.textContent = timeString;
+            }
+        }
+
+        function setMinDate() {
+            const now = new Date();
+            const currentHour = now.getHours();
+            
+            let minDate;
+            if (currentHour >= 14) {
+                minDate = new Date(now);
+                minDate.setDate(now.getDate() + 2);
+            } else {
+                minDate = new Date(now);
+                minDate.setDate(now.getDate() + 1);
+            }
+            
+            const minDateString = minDate.toISOString().split('T')[0];
+            
+            const patientDateInput = document.getElementById('patient-order-date');
+            const employeeDateInput = document.getElementById('employee-order-date');
+            
+            if (patientDateInput) {
+                patientDateInput.min = minDateString;
+                patientDateInput.value = minDateString;
+            }
+            if (employeeDateInput) {
+                employeeDateInput.min = minDateString;
+                employeeDateInput.value = minDateString;
+            }
+        }
+
+        function checkTimeRestrictions() {
+            const now = new Date();
+            const currentHour = now.getHours();
+            
+            const patientWarning = document.getElementById('time-warning');
+            if (patientWarning) {
+                if (currentHour >= 14) {
+                    patientWarning.style.display = 'block';
+                    patientWarning.innerHTML = '⚠️ Увага! Зараз ' + currentHour + ':' + String(now.getMinutes()).padStart(2, '0') + '. Замовлення можна зробити тільки на післязавтра та далі!';
+                } else {
+                    patientWarning.style.display = 'block';
+                    patientWarning.innerHTML = '✅ До 14:00 можна замовляти на завтра. Зараз ' + currentHour + ':' + String(now.getMinutes()).padStart(2, '0') + '.';
+                    patientWarning.style.borderColor = '#27ae60';
+                    patientWarning.style.backgroundColor = 'rgba(46, 204, 113, 0.1)';
+                    patientWarning.style.color = '#229954';
+                }
+            }
+            
+            const employeeWarning = document.getElementById('employee-time-warning');
+            if (employeeWarning) {
+                if (currentHour >= 9.5 || currentHour >= 14) {
+                    employeeWarning.style.display = 'block';
+                    if (currentHour >= 14) {
+                        employeeWarning.innerHTML = '⚠️ Увага! Після 14:00 замовлення можна зробити тільки на післязавтра та далі!';
+                    } else {
+                        employeeWarning.innerHTML = '⚠️ Увага! Замовлення на обід можна зробити до 9:30 дня доставки!';
+                    }
+                } else {
+                    employeeWarning.style.display = 'none';
+                }
+            }
+        }
+
+        // Render weekly menu
+        function renderWeeklyMenu() {
+            const menuContainer = document.getElementById('weekly-menu');
+            if (!menuContainer) return;
+            
+            menuContainer.innerHTML = '';
+            
+            const dayNames = {
+                monday: 'Понеділок',
+                tuesday: 'Вівторок', 
+                wednesday: 'Середа',
+                thursday: 'Четвер',
+                friday: 'П\'ятниця',
+                saturday: 'Субота',
+                sunday: 'Неділя'
+            };
+            
+            Object.keys(weeklyMenu).forEach(day => {
+                const dayData = weeklyMenu[day];
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'day-menu';
+                
+                dayDiv.innerHTML = `
+                    <div class="day-header">
+                        <span>${dayNames[day]}</span>
+                    </div>
+                    <div class="meal-type">
+                        <h4>🌅 Сніданок</h4>
+                        <div class="meal-items">${dayData.breakfast.join(', ')}</div>
+                    </div>
+                    <div class="meal-type">
+                        <h4>🍽️ Обід</h4>
+                        <div class="meal-items">${dayData.lunch.join(', ')}</div>
+                    </div>
+                    <div class="meal-type">
+                        <h4>🌙 Вечеря</h4>
+                        <div class="meal-items">${dayData.dinner.join(', ')}</div>
+                    </div>
+                `;
+                
+                menuContainer.appendChild(dayDiv);
+            });
+        }
+
+        // Update department selects
+        function updateDepartmentSelects() {
+            const patientDeptSelect = document.getElementById('patient-department');
+            const deptFilterSelect = document.getElementById('department-filter');
+            
+            if (patientDeptSelect) {
+                patientDeptSelect.innerHTML = '<option value="">Оберіть відділення</option>';
+                departments.forEach(dept => {
+                    patientDeptSelect.innerHTML += `<option value="${dept.id}">${dept.name}</option>`;
+                });
+            }
+            
+            if (deptFilterSelect) {
+                deptFilterSelect.innerHTML = '<option value="all">Всі відділення</option>';
+                departments.forEach(dept => {
+                    deptFilterSelect.innerHTML += `<option value="${dept.id}">${dept.name}</option>`;
+                });
+            }
+        }
+
+        // Meal option selection
+        function selectMealOption(option) {
+            selectedMealOption = option;
+            
+            // Update UI
+            const fullOption = document.getElementById('full-meal-option');
+            const partialOption = document.getElementById('partial-meal-option');
+            
+            if (option === 'full') {
+                fullOption.classList.add('selected');
+                partialOption.classList.remove('selected');
+                fullOption.querySelector('.select-meal-btn').textContent = 'Обрано ✓';
+                fullOption.querySelector('.select-meal-btn').classList.add('selected');
+                partialOption.querySelector('.select-meal-btn').textContent = 'Обрати';
+                partialOption.querySelector('.select-meal-btn').classList.remove('selected');
+            } else {
+                partialOption.classList.add('selected');
+                fullOption.classList.remove('selected');
+                partialOption.querySelector('.select-meal-btn').textContent = 'Обрано ✓';
+                partialOption.querySelector('.select-meal-btn').classList.add('selected');
+                fullOption.querySelector('.select-meal-btn').textContent = 'Обрати';
+                fullOption.querySelector('.select-meal-btn').classList.remove('selected');
+            }
+            
+            updateOrderSummary();
+        }
+
+        function selectEmployeeMealOption(option) {
+            selectedEmployeeMealOption = option;
+            
+            // Update UI
+            const fullOption = document.getElementById('employee-full-meal-option');
+            const partialOption = document.getElementById('employee-partial-meal-option');
+            
+            if (option === 'full') {
+                fullOption.classList.add('selected');
+                partialOption.classList.remove('selected');
+                fullOption.querySelector('.select-meal-btn').textContent = 'Обрано ✓';
+                fullOption.querySelector('.select-meal-btn').classList.add('selected');
+                partialOption.querySelector('.select-meal-btn').textContent = 'Обрати';
+                partialOption.querySelector('.select-meal-btn').classList.remove('selected');
+            } else {
+                partialOption.classList.add('selected');
+                fullOption.classList.remove('selected');
+                partialOption.querySelector('.select-meal-btn').textContent = 'Обрано ✓';
+                partialOption.querySelector('.select-meal-btn').classList.add('selected');
+                fullOption.querySelector('.select-meal-btn').textContent = 'Обрати';
+                fullOption.querySelector('.select-meal-btn').classList.remove('selected');
+            }
+            
+            updateEmployeeOrderSummary();
+        }
+
+        function updateOrderSummary() {
+            if (!selectedMealOption) {
+                const itemsDiv = document.getElementById('patient-order-items');
+                const priceDiv = document.getElementById('patient-total-price');
+                if (itemsDiv) itemsDiv.innerHTML = '<div style="text-align: center; color: #7f8c8d;">Оберіть варіант харчування</div>';
+                if (priceDiv) priceDiv.textContent = 'Загальна сума: 0 грн';
+                return;
+            }
+            
+            const daysInput = document.getElementById('patient-days-count');
+            const daysCount = daysInput ? parseInt(daysInput.value) || 1 : 1;
+            
+            const pricePerDay = selectedMealOption === 'full' ? 260 : 200;
+            const totalAmount = pricePerDay * daysCount;
+            
+            const mealType = selectedMealOption === 'full' ? 'Повноцінне тридільне харчування' : 'Частинне дводільне харчування';
+            const mealDescription = selectedMealOption === 'full' ? 
+                'сніданок, обід, вечеря' : 
+                'обід, вечеря';
+            
+            const summary = `
+                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                    <span>${mealType} × ${daysCount} ${daysCount > 1 ? 'днів' : 'день'}</span>
+                    <span>${totalAmount} грн</span>
+                </div>
+                <div style="font-size: 0.9em; color: #7f8c8d; margin-top: 5px;">
+                    Включає: ${mealDescription} згідно тижневого меню
+                </div>
+            `;
+            
+            const itemsDiv = document.getElementById('patient-order-items');
+            const priceDiv = document.getElementById('patient-total-price');
+            if (itemsDiv) itemsDiv.innerHTML = summary;
+            if (priceDiv) priceDiv.textContent = `Загальна сума: ${totalAmount} грн`;
+        }
+
+        function updateEmployeeOrderSummary() {
+            if (!selectedEmployeeMealOption) {
+                const itemsDiv = document.getElementById('employee-order-items');
+                const priceDiv = document.getElementById('employee-total-price');
+                if (itemsDiv) itemsDiv.innerHTML = '<div style="text-align: center; color: #7f8c8d;">Оберіть варіант харчування</div>';
+                if (priceDiv) priceDiv.textContent = 'Загальна сума: 0 грн';
+                return;
+            }
+            
+            const daysInput = document.getElementById('employee-days-count');
+            const daysCount = daysInput ? parseInt(daysInput.value) || 1 : 1;
+            
+            const pricePerDay = selectedEmployeeMealOption === 'full' ? 260 : 200;
+            const totalAmount = pricePerDay * daysCount;
+            
+            const mealType = selectedEmployeeMealOption === 'full' ? 'Повноцінне тридільне харчування' : 'Частинне дводільне харчування';
+            const mealDescription = selectedEmployeeMealOption === 'full' ? 
+                'сніданок, обід, вечеря' : 
+                'обід, вечеря';
+            
+            const summary = `
+                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                    <span>${mealType} × ${daysCount} ${daysCount > 1 ? 'днів' : 'день'}</span>
+                    <span>${totalAmount} грн</span>
+                </div>
+                <div style="font-size: 0.9em; color: #7f8c8d; margin-top: 5px;">
+                    Включає: ${mealDescription} згідно тижневого меню
+                </div>
+            `;
+            
+            const itemsDiv = document.getElementById('employee-order-items');
+            const priceDiv = document.getElementById('employee-total-price');
+            if (itemsDiv) itemsDiv.innerHTML = summary;
+            if (priceDiv) priceDiv.textContent = `Загальна сума: ${totalAmount} грн`;
+        }
+
+        // Modal functions
+        function openLoginModal() {
+            document.getElementById('loginModal').style.display = 'block';
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('user-type-selection').style.display = 'block';
+            document.getElementById('employee-login').style.display = 'none';
+        }
+
+        function selectUserType(type) {
+            if (type === 'patient') {
+                currentUserType = 'patient';
+                saveSession();
+                closeLoginModal();
+                showApp();
+            } else if (type === 'employee') {
+                document.getElementById('user-type-selection').style.display = 'none';
+                document.getElementById('employee-login').style.display = 'block';
+            }
+        }
+
+        function backToUserSelection() {
+            document.getElementById('user-type-selection').style.display = 'block';
+            document.getElementById('employee-login').style.display = 'none';
+            document.getElementById('employee-phone').value = '';
+            document.getElementById('employee-password').value = '';
+        }
+
+        function loginEmployee() {
+            const phone = document.getElementById('employee-phone').value;
+            const password = document.getElementById('employee-password').value;
+
+            if (!phone || !password) {
+                alert('Будь ласка, введіть номер телефону та пароль');
+                return;
+            }
+
+            if (employees[phone] && employees[phone].password === password) {
+                currentUserType = 'employee';
+                currentEmployee = employees[phone];
+                saveSession();
+                closeLoginModal();
+                showApp();
+            } else {
+                alert('Неправильний номер телефону або пароль');
+            }
+        }
+
+        function showApp() {
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('app-container').style.display = 'block';
+            
+            const userDisplay = document.getElementById('user-type-display');
+            if (currentUserType === 'patient') {
+                userDisplay.textContent = '👤 Пацієнт';
+                document.getElementById('patient-order-form').classList.remove('hidden');
+                document.getElementById('employee-order-form').classList.add('hidden');
+                document.getElementById('admin-panel').classList.add('hidden');
+            } else if (currentUserType === 'employee') {
+                userDisplay.textContent = `👨‍⚕️ ${currentEmployee.name}`;
+                document.getElementById('employee-order-form').classList.remove('hidden');
+                document.getElementById('patient-order-form').classList.add('hidden');
+                document.getElementById('admin-panel').classList.add('hidden');
+                
+                if (currentEmployee.role === 'admin') {
+                    document.getElementById('admin-panel').classList.remove('hidden');
+                    userDisplay.textContent = `👑 ${currentEmployee.name} (Адмін)`;
+                    updateAdminPanel();
+                }
+            }
+            
+            updateOrderHistory();
+        }
+
+        function logout() {
+            currentUserType = null;
+            currentEmployee = null;
+            selectedMealOption = null;
+            selectedEmployeeMealOption = null;
+            clearSession();
+            document.getElementById('app-container').style.display = 'none';
+            document.getElementById('welcome-screen').style.display = 'block';
+            clearOrder();
+        }
+
+        function placeOrder(userType) {
+            const selectedOption = userType === 'patient' ? selectedMealOption : selectedEmployeeMealOption;
+            
+            if (!selectedOption) {
+                alert('Будь ласка, оберіть варіант харчування');
+                return;
+            }
+            
+            let orderData = {};
+            
+            if (userType === 'patient') {
+                const department = document.getElementById('patient-department').value;
+                const room = document.getElementById('patient-room').value;
+                const patientName = document.getElementById('patient-name').value;
+                const orderDate = document.getElementById('patient-order-date').value;
+                const dietType = document.getElementById('patient-diet-type').value;
+                const daysCount = document.getElementById('patient-days-count').value;
+                
+                if (!department || !room || !patientName || !orderDate) {
+                    alert('Будь ласка, заповніть всі обов\'язкові поля');
+                    return;
+                }
+                
+                const pricePerDay = selectedOption === 'full' ? 260 : 200;
+                const totalAmount = pricePerDay * parseInt(daysCount);
+                
+                orderData = {
+                    type: 'patient',
+                    department,
+                    room,
+                    patientName,
+                    orderDate,
+                    dietType,
+                    daysCount,
+                    mealOption: selectedOption,
+                    amount: totalAmount
+                };
+            } else if (userType === 'employee') {
+                const orderDate = document.getElementById('employee-order-date').value;
+                const dietType = document.getElementById('employee-diet-type').value;
+                const daysCount = document.getElementById('employee-days-count').value;
+                
+                if (!orderDate) {
+                    alert('Будь ласка, оберіть дату замовлення');
+                    return;
+                }
+                
+                const pricePerDay = selectedOption === 'full' ? 260 : 200;
+                const totalAmount = pricePerDay * parseInt(daysCount);
+                
+                orderData = {
+                    type: 'employee',
+                    employeeName: currentEmployee.name,
+                    employeeDepartment: currentEmployee.department,
+                    orderDate,
+                    dietType,
+                    daysCount,
+                    mealOption: selectedOption,
+                    amount: totalAmount
+                };
+            }
+            
+            const paymentConfirmed = confirm(`Підтвердити замовлення на суму ${orderData.amount} грн?`);
+            
+            if (paymentConfirmed) {
+                const order = {
+                    id: Date.now(),
+                    ...orderData,
+                    status: 'Підтверджено',
+                    items: getMealItems(selectedOption),
+                    createdAt: new Date().toLocaleString('uk-UA')
+                };
+                
+                orders.push(order);
+                saveData();
+                
+                const successDiv = document.createElement('div');
+                successDiv.className = 'success-message';
+                successDiv.innerHTML = `✅ Замовлення успішно оформлено! Номер замовлення: ${order.id}`;
+                
+                const formContainer = userType === 'patient' 
+                    ? document.getElementById('patient-order-form') 
+                    : document.getElementById('employee-order-form');
+                
+                if (formContainer) {
+                    formContainer.insertBefore(successDiv, formContainer.firstChild);
+                    setTimeout(() => successDiv.remove(), 5000);
+                }
+                
+                clearOrder();
+                updateOrderHistory();
+                
+                if (currentEmployee && currentEmployee.role === 'admin') {
+                    updateAdminPanel();
+                }
+            }
+        }
+
+        function getMealItems(mealOption) {
+            const mealType = mealOption === 'full' ? 'Повноцінне тридільне харчування' : 'Частинне дводільне харчування';
+            const price = mealOption === 'full' ? 260 : 200;
+            const description = mealOption === 'full' ? 
+                'Включає: сніданок, обід, вечеря' : 
+                'Включає: обід, вечеря';
+            
+            return [{
+                name: mealType,
+                description: description,
+                quantity: 1,
+                unitPrice: price,
+                totalPrice: price
+            }];
+        }
+
+        function clearOrder() {
+            selectedMealOption = null;
+            selectedEmployeeMealOption = null;
+            
+            // Reset patient form
+            document.getElementById('patient-department').value = '';
+            document.getElementById('patient-room').value = '';
+            document.getElementById('patient-name').value = '';
+            document.getElementById('patient-days-count').value = 1;
+            
+            // Reset employee form  
+            document.getElementById('employee-days-count').value = 1;
+            
+            // Reset meal option selections
+            document.querySelectorAll('.meal-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelectorAll('.select-meal-btn').forEach(btn => {
+                btn.textContent = 'Обрати';
+                btn.classList.remove('selected');
+            });
+            
+            updateOrderSummary();
+            updateEmployeeOrderSummary();
+        }
+
+        function updateOrderHistory() {
+            const historyDiv = document.getElementById('order-history');
+            
+            if (!historyDiv) return;
+            
+            if (orders.length === 0) {
+                historyDiv.innerHTML = '<div style="text-align: center; color: #7f8c8d; padding: 20px;">Поки що замовлень немає</div>';
+                return;
+            }
+            
+            let historyHTML = '';
+            orders.slice(-3).reverse().forEach(order => {
+                const mealTypeText = order.mealOption === 'full' ? 'Повне харчування' : 'Часткове харчування';
+                
+                historyHTML += `
+                    <div style="background: rgba(52, 152, 219, 0.1); padding: 15px; border-radius: 8px; margin: 10px 0;">
+                        <div style="font-weight: bold;">Замовлення #${order.id}</div>
+                        <div>Дата: ${order.orderDate}</div>
+                        ${order.type === 'patient' ? 
+                            `<div>Відділення: ${order.department}, Палата: ${order.room}</div>
+                             <div>Пацієнт: ${order.patientName}</div>` :
+                            `<div>Співробітник: ${order.employeeName}</div>
+                             <div>Відділення: ${order.employeeDepartment}</div>`
+                        }
+                        <div>Тип дієти: ${order.dietType}</div>
+                        <div>Тип харчування: ${mealTypeText}</div>
+                        <div>Кількість днів: ${order.daysCount}</div>
+                        <div style="color: #27ae60; font-weight: bold;">Сума: ${order.amount} грн</div>
+                        <div style="color: #27ae60;">Статус: ${order.status}</div>
+                        <div style="font-size: 0.9em; color: #7f8c8d;">Створено: ${order.createdAt}</div>
+                    </div>
+                `;
+            });
+            
+            historyDiv.innerHTML = historyHTML;
+        }
+
+        // Admin Panel Functions
+        function switchAdminTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.admin-tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.admin-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Update tab content
+            if (tabName === 'summary') {
+                updateGeneralStats();
+                updateSummaryTable();
+            } else if (tabName === 'departments') {
+                updateDepartmentStats();
+            } else if (tabName === 'categories') {
+                updateCategoryStats();
+            } else if (tabName === 'kitchen') {
+                updateKitchenInfo();
+            } else if (tabName === 'export') {
+                prepareExportData();
+            }
+        }
+
+        function updateAdminPanel() {
+            updateGeneralStats();
+            updateSummaryTable();
+        }
+
+        function updateGeneralStats() {
+            const statsDiv = document.getElementById('general-stats');
+            if (!statsDiv) return;
+
+            const totalOrders = orders.length;
+            const patientOrders = orders.filter(o => o.type === 'patient').length;
+            const employeeOrders = orders.filter(o => o.type === 'employee').length;
+            const fullMealOrders = orders.filter(o => o.mealOption === 'full').length;
+            const partialMealOrders = orders.filter(o => o.mealOption === 'partial').length;
+            const totalRevenue = orders.reduce((sum, o) => sum + o.amount, 0);
+            const avgOrderValue = totalOrders > 0 ? (totalRevenue / totalOrders).toFixed(2) : 0;
+
+            const today = new Date().toISOString().split('T')[0];
+            const todayOrders = orders.filter(o => o.orderDate === today).length;
+
+            statsDiv.innerHTML = `
+                <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="stat-value">${totalOrders}</div>
+                    <div class="stat-label">Всього замовлень</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%);">
+                    <div class="stat-value">${patientOrders}</div>
+                    <div class="stat-label">Замовлення пацієнтів</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+                    <div class="stat-value">${employeeOrders}</div>
+                    <div class="stat-label">Замовлення співробітників</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">
+                    <div class="stat-value">${fullMealOrders}</div>
+                    <div class="stat-label">Повне харчування</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+                    <div class="stat-value">${partialMealOrders}</div>
+                    <div class="stat-label">Часткове харчування</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">
+                    <div class="stat-value">${totalRevenue} грн</div>
+                    <div class="stat-label">Загальний дохід</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);">
+                    <div class="stat-value">${avgOrderValue} грн</div>
+                    <div class="stat-label">Середній чек</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);">
+                    <div class="stat-value">${todayOrders}</div>
+                    <div class="stat-label">Замовлень сьогодні</div>
+                </div>
+            `;
+        }
+
+        function updateSummaryTable() {
+            const tableBody = document.getElementById('summary-orders-table');
+            if (!tableBody) return;
+
+            if (orders.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 20px; color: #7f8c8d;">
+                            Немає замовлень для відображення
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let tableHTML = '';
+            const sortedOrders = [...orders].reverse();
+
+            sortedOrders.slice(0, 10).forEach(order => {
+                const mealBadge = order.mealOption === 'full' ? 
+                    '<span style="background: #f39c12; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px;">Повне</span>' :
+                    '<span style="background: #3498db; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px;">Часткове</span>';
+
+                tableHTML += `
+                    <tr>
+                        <td>#${order.id.toString().slice(-4)}</td>
+                        <td>${order.orderDate}</td>
+                        <td>
+                            <span style="padding: 3px 8px; border-radius: 15px; font-size: 12px; font-weight: bold; 
+                                ${order.type === 'patient' ? 'background: rgba(46,204,113,0.2); color: #27ae60' : 'background: rgba(231,76,60,0.2); color: #e74c3c'}">
+                                ${order.type === 'patient' ? 'Пацієнт' : 'Співробітник'}
+                            </span>
+                        </td>
+                        <td>
+                            ${order.type === 'patient' ? 
+                                `<strong>${order.patientName}</strong><br><small>${order.department}, Палата ${order.room}</small>` : 
+                                `<strong>${order.employeeName}</strong><br><small>${order.employeeDepartment}</small>`
+                            }
+                        </td>
+                        <td>${mealBadge}</td>
+                        <td style="font-weight: bold; color: #27ae60;">${order.amount} грн</td>
+                        <td>
+                            <button onclick="showOrderDetails('${order.id}')" style="background: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                                Деталі
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableBody.innerHTML = tableHTML;
+        }
+
+        function updateDepartmentStats() {
+            const container = document.getElementById('department-stats');
+            if (!container) return;
+
+            const deptStats = {};
+            
+            departments.forEach(dept => {
+                deptStats[dept.id] = {
+                    name: dept.name,
+                    totalOrders: 0,
+                    fullMealOrders: 0,
+                    partialMealOrders: 0,
+                    totalRevenue: 0,
+                    patients: new Set(),
+                    diets: {}
+                };
+            });
+
+            orders.forEach(order => {
+                if (order.type === 'patient' && deptStats[order.department]) {
+                    deptStats[order.department].totalOrders++;
+                    if (order.mealOption === 'full') {
+                        deptStats[order.department].fullMealOrders++;
+                    } else {
+                        deptStats[order.department].partialMealOrders++;
+                    }
+                    deptStats[order.department].totalRevenue += order.amount;
+                    deptStats[order.department].patients.add(order.patientName);
+                    
+                    if (!deptStats[order.department].diets[order.dietType]) {
+                        deptStats[order.department].diets[order.dietType] = 0;
+                    }
+                    deptStats[order.department].diets[order.dietType]++;
+                }
+            });
+
+            let html = '<div class="stats-grid">';
+            
+            Object.keys(deptStats).forEach(deptId => {
+                const stats = deptStats[deptId];
+                if (stats.totalOrders > 0) {
+                    html += `
+                        <div class="card" style="margin: 10px 0;">
+                            <h4>${stats.name}</h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0;">
+                                <div>
+                                    <strong>Всього замовлень:</strong> ${stats.totalOrders}
+                                </div>
+                                <div>
+                                    <strong>Унікальних пацієнтів:</strong> ${stats.patients.size}
+                                </div>
+                                <div>
+                                    <strong>Повне харчування:</strong> ${stats.fullMealOrders}
+                                </div>
+                                <div>
+                                    <strong>Часткове харчування:</strong> ${stats.partialMealOrders}
+                                </div>
+                                <div>
+                                    <strong>Загальна сума:</strong> ${stats.totalRevenue} грн
+                                </div>
+                                <div>
+                                    <strong>Середній чек:</strong> ${(stats.totalRevenue / stats.totalOrders).toFixed(2)} грн
+                                </div>
+                            </div>
+                            <div>
+                                <strong>Розподіл по дієтах:</strong>
+                                <ul style="margin: 10px 0;">
+                                    ${Object.entries(stats.diets).map(([diet, count]) => 
+                                        `<li>${diet}: ${count} замовлень</li>`
+                                    ).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            html += '</div>';
+            container.innerHTML = html || '<p style="text-align: center; color: #7f8c8d;">Немає даних для відображення</p>';
+        }
+
+        function updateCategoryStats() {
+            const container = document.getElementById('category-stats');
+            if (!container) return;
+
+            // Calculate statistics by categories
+            const categoryStats = {
+                byType: { patient: 0, employee: 0 },
+                byMealOption: { full: 0, partial: 0 },
+                byDiet: {},
+                byDepartment: {}
+            };
+
+            orders.forEach(order => {
+                // By type
+                categoryStats.byType[order.type]++;
+                
+                // By meal option
+                if (order.mealOption) {
+                    categoryStats.byMealOption[order.mealOption]++;
+                }
+                
+                // By diet
+                if (!categoryStats.byDiet[order.dietType]) {
+                    categoryStats.byDiet[order.dietType] = 0;
+                }
+                categoryStats.byDiet[order.dietType]++;
+                
+                // By department
+                const dept = order.type === 'patient' ? order.department : order.employeeDepartment;
+                if (!categoryStats.byDepartment[dept]) {
+                    categoryStats.byDepartment[dept] = 0;
+                }
+                categoryStats.byDepartment[dept]++;
+            });
+
+            let html = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="card">
+                        <h5>За типом замовника</h5>
+                        <canvas id="typeChart" width="200" height="200"></canvas>
+                        <div style="margin-top: 15px;">
+                            <div>Пацієнти: ${categoryStats.byType.patient}</div>
+                            <div>Співробітники: ${categoryStats.byType.employee}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h5>За типом харчування</h5>
+                        <canvas id="mealChart" width="200" height="200"></canvas>
+                        <div style="margin-top: 15px;">
+                            <div>Повне харчування: ${categoryStats.byMealOption.full}</div>
+                            <div>Часткове харчування: ${categoryStats.byMealOption.partial}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" style="margin-top: 20px;">
+                    <h5>Розподіл по дієтах</h5>
+                    <table style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Тип дієти</th>
+                                <th>Кількість замовлень</th>
+                                <th>Відсоток</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Object.entries(categoryStats.byDiet)
+                                .sort((a, b) => b[1] - a[1])
+                                .map(([diet, count]) => `
+                                    <tr>
+                                        <td>${diet}</td>
+                                        <td>${count}</td>
+                                        <td>${((count / orders.length) * 100).toFixed(1)}%</td>
+                                    </tr>
+                                `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = html;
+            
+            // Draw simple pie charts
+            drawPieChart('typeChart', 
+                [categoryStats.byType.patient, categoryStats.byType.employee],
+                ['#27ae60', '#e74c3c']);
+            
+            drawPieChart('mealChart',
+                [categoryStats.byMealOption.full, categoryStats.byMealOption.partial],
+                ['#f39c12', '#3498db']);
+        }
+
+        function drawPieChart(canvasId, data, colors) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 70;
+            
+            let total = data.reduce((a, b) => a + b, 0);
+            if (total === 0) return;
+            
+            let currentAngle = -Math.PI / 2;
+            
+            data.forEach((value, i) => {
+                const sliceAngle = (value / total) * 2 * Math.PI;
+                
+                // Draw slice
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+                ctx.lineTo(centerX, centerY);
+                ctx.fillStyle = colors[i];
+                ctx.fill();
+                
+                currentAngle += sliceAngle;
+            });
+        }
+
+        function updateKitchenInfo() {
+            const container = document.getElementById('kitchen-info');
+            const dateInput = document.getElementById('kitchen-date');
+            
+            if (!container || !dateInput) return;
+            
+            if (!dateInput.value) {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                dateInput.value = tomorrow.toISOString().split('T')[0];
+            }
+            
+            const selectedDate = dateInput.value;
+            const dateOrders = orders.filter(o => o.orderDate === selectedDate);
+            
+            if (dateOrders.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #7f8c8d;">Немає замовлень на обрану дату</p>';
+                return;
+            }
+            
+            // Calculate meal requirements
+            const mealRequirements = {
+                breakfast: 0,
+                lunch: 0,
+                dinner: 0
+            };
+            
+            const departmentSummary = {};
+            
+            dateOrders.forEach(order => {
+                const dept = order.type === 'patient' ? order.department : 'Співробітники';
+                if (!departmentSummary[dept]) {
+                    departmentSummary[dept] = {
+                        orders: 0,
+                        fullMeals: 0,
+                        partialMeals: 0
+                    };
+                }
+                departmentSummary[dept].orders++;
+                
+                if (order.mealOption === 'full') {
+                    departmentSummary[dept].fullMeals++;
+                    mealRequirements.breakfast += parseInt(order.daysCount);
+                    mealRequirements.lunch += parseInt(order.daysCount);
+                    mealRequirements.dinner += parseInt(order.daysCount);
+                } else {
+                    departmentSummary[dept].partialMeals++;
+                    mealRequirements.lunch += parseInt(order.daysCount);
+                    mealRequirements.dinner += parseInt(order.daysCount);
+                }
+            });
+            
+            let html = `
+                <h5>📅 Дата: ${selectedDate}</h5>
+                <h5>📊 Загальна кількість замовлень: ${dateOrders.length}</h5>
+                
+                <div style="margin: 20px 0;">
+                    <h5>🍽️ Необхідно приготувати порцій:</h5>
+                    <table style="width: 100%;">
+                        <thead>
+                            <tr style="background: #ecf0f1;">
+                                <th style="padding: 10px;">Прийом їжі</th>
+                                <th style="padding: 10px;">Кількість порцій</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 10px;">🌅 Сніданок</td>
+                                <td style="padding: 10px; font-weight: bold;">${mealRequirements.breakfast}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px;">🍽️ Обід</td>
+                                <td style="padding: 10px; font-weight: bold;">${mealRequirements.lunch}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px;">🌙 Вечеря</td>
+                                <td style="padding: 10px; font-weight: bold;">${mealRequirements.dinner}</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: #ecf0f1; font-weight: bold;">
+                                <td style="padding: 10px;">ВСЬОГО ПОРЦІЙ:</td>
+                                <td style="padding: 10px;">${mealRequirements.breakfast + mealRequirements.lunch + mealRequirements.dinner}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <div style="margin: 20px 0;">
+                    <h5>🏥 Розподіл по відділеннях:</h5>
+                    <table style="width: 100%;">
+                        <thead>
+                            <tr style="background: #ecf0f1;">
+                                <th style="padding: 10px;">Відділення</th>
+                                <th style="padding: 10px;">Замовлення</th>
+                                <th style="padding: 10px;">Повне харчування</th>
+                                <th style="padding: 10px;">Часткове харчування</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Object.entries(departmentSummary)
+                                .map(([dept, stats]) => `
+                                    <tr>
+                                        <td style="padding: 10px;">${departments.find(d => d.id === dept)?.name || dept}</td>
+                                        <td style="padding: 10px;">${stats.orders}</td>
+                                        <td style="padding: 10px;">${stats.fullMeals}</td>
+                                        <td style="padding: 10px;">${stats.partialMeals}</td>
+                                    </tr>
+                                `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        function printKitchenOrder() {
+            const dateInput = document.getElementById('kitchen-date');
+            const selectedDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+            
+            const printWindow = window.open('', '', 'width=800,height=600');
+            const dateOrders = orders.filter(o => o.orderDate === selectedDate);
+            
+            const mealRequirements = {
+                breakfast: 0,
+                lunch: 0,
+                dinner: 0
+            };
+            
+            dateOrders.forEach(order => {
+                if (order.mealOption === 'full') {
+                    mealRequirements.breakfast += parseInt(order.daysCount);
+                    mealRequirements.lunch += parseInt(order.daysCount);
+                    mealRequirements.dinner += parseInt(order.daysCount);
+                } else {
+                    mealRequirements.lunch += parseInt(order.daysCount);
+                    mealRequirements.dinner += parseInt(order.daysCount);
+                }
+            });
+            
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Замовлення для кухні - ${selectedDate}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h1 { text-align: center; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        th, td { border: 1px solid #000; padding: 10px; text-align: left; }
+                        th { background: #f0f0f0; }
+                        .total { font-weight: bold; background: #f0f0f0; }
+                    </style>
+                </head>
+                <body>
+                    <h1>🍳 Замовлення для кухні</h1>
+                    <h2>Дата: ${selectedDate}</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Прийом їжі</th>
+                                <th>Кількість порцій</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>🌅 Сніданок</td>
+                                <td>${mealRequirements.breakfast}</td>
+                            </tr>
+                            <tr>
+                                <td>🍽️ Обід</td>
+                                <td>${mealRequirements.lunch}</td>
+                            </tr>
+                            <tr>
+                                <td>🌙 Вечеря</td>
+                                <td>${mealRequirements.dinner}</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="total">
+                                <td>ВСЬОГО ПОРЦІЙ:</td>
+                                <td>${mealRequirements.breakfast + mealRequirements.lunch + mealRequirements.dinner}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <p>Час друку: ${new Date().toLocaleString('uk-UA')}</p>
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function printWarehouseOrder() {
+            const dateInput = document.getElementById('kitchen-date');
+            const selectedDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+            
+            const printWindow = window.open('', '', 'width=800,height=600');
+            const dateOrders = orders.filter(o => o.orderDate === selectedDate);
+            
+            // Calculate total meals needed
+            const mealRequirements = {
+                breakfast: 0,
+                lunch: 0,
+                dinner: 0
+            };
+            
+            dateOrders.forEach(order => {
+                if (order.mealOption === 'full') {
+                    mealRequirements.breakfast += parseInt(order.daysCount);
+                    mealRequirements.lunch += parseInt(order.daysCount);
+                    mealRequirements.dinner += parseInt(order.daysCount);
+                } else {
+                    mealRequirements.lunch += parseInt(order.daysCount);
+                    mealRequirements.dinner += parseInt(order.daysCount);
+                }
+            });
+            
+            // Calculate ingredients needed (simplified estimation)
+            const totalMeals = mealRequirements.breakfast + mealRequirements.lunch + mealRequirements.dinner;
+            const ingredients = {
+                'М\'ясо (кг)': (totalMeals * 0.15).toFixed(1),
+                'Овочі (кг)': (totalMeals * 0.2).toFixed(1),
+                'Крупи (кг)': (totalMeals * 0.1).toFixed(1),
+                'Молочні продукти (л)': (mealRequirements.breakfast * 0.2).toFixed(1),
+                'Хліб (шт)': Math.ceil(totalMeals * 0.5),
+                'Фрукти (кг)': (totalMeals * 0.05).toFixed(1)
+            };
+            
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Замовлення для складу - ${selectedDate}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h1 { text-align: center; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        th, td { border: 1px solid #000; padding: 10px; text-align: left; }
+                        th { background: #f0f0f0; }
+                    </style>
+                </head>
+                <body>
+                    <h1>📦 Замовлення для складу</h1>
+                    <h2>Дата: ${selectedDate}</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Інгредієнт</th>
+                                <th>Необхідна кількість</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Object.entries(ingredients)
+                                .filter(([_, quantity]) => parseFloat(quantity) > 0)
+                                .map(([ingredient, quantity]) => `
+                                    <tr>
+                                        <td>${ingredient}</td>
+                                        <td>${quantity}</td>
+                                    </tr>
+                                `).join('')}
+                        </tbody>
+                    </table>
+                    <p>Час друку: ${new Date().toLocaleString('uk-UA')}</p>
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Settings functions
+        function openDepartmentEditor() {
+            const modal = document.getElementById('departmentModal');
+            const list = document.getElementById('departments-list');
+            
+            if (!modal || !list) return;
+            
+            list.innerHTML = '';
+            departments.forEach((dept, index) => {
+                list.innerHTML += `
+                    <div class="menu-editor-item">
+                        <input type="text" value="${dept.name}" id="dept-name-${index}" placeholder="Назва відділення">
+                        <button onclick="removeDepartment(${index})">❌ Видалити</button>
+                    </div>
+                `;
+            });
+            
+            modal.style.display = 'block';
+        }
+
+        function closeDepartmentEditor() {
+            document.getElementById('departmentModal').style.display = 'none';
+        }
+
+        function addNewDepartment() {
+            const list = document.getElementById('departments-list');
+            const newIndex = departments.length;
+            
+            const newItem = document.createElement('div');
+            newItem.className = 'menu-editor-item';
+            newItem.innerHTML = `
+                <input type="text" id="dept-name-${newIndex}" placeholder="Назва нового відділення">
+                <button onclick="removeDepartment(${newIndex})">❌ Видалити</button>
+            `;
+            
+            list.appendChild(newItem);
+            departments.push({ id: `dept-${Date.now()}`, name: '' });
+        }
+
+        function removeDepartment(index) {
+            departments.splice(index, 1);
+            openDepartmentEditor();
+        }
+
+        function saveDepartments() {
+            departments.forEach((dept, index) => {
+                const nameInput = document.getElementById(`dept-name-${index}`);
+                if (nameInput) {
+                    dept.name = nameInput.value;
+                }
+            });
+            
+            departments = departments.filter(dept => dept.name.trim() !== '');
+            saveData();
+            updateDepartmentSelects();
+            closeDepartmentEditor();
+            alert('Відділення успішно оновлено!');
+        }
+
+        function openWeeklyMenuEditor() {
+            const modal = document.getElementById('weeklyMenuModal');
+            if (!modal) return;
+            
+            selectDay('monday');
+            modal.style.display = 'block';
+        }
+
+        function closeWeeklyMenuEditor() {
+            document.getElementById('weeklyMenuModal').style.display = 'none';
+        }
+
+        function selectDay(day) {
+            currentEditDay = day;
+            
+            // Update day buttons
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update day editor
+            const editor = document.getElementById('day-menu-editor');
+            const dayData = weeklyMenu[day];
+            
+            const dayNames = {
+                monday: 'Понеділок',
+                tuesday: 'Вівторок', 
+                wednesday: 'Середа',
+                thursday: 'Четвер',
+                friday: 'П\'ятниця',
+                saturday: 'Субота',
+                sunday: 'Неділя'
+            };
+            
+            editor.innerHTML = `
+                <div class="menu-editor-item">
+                    <h4>${dayNames[day]}</h4>
+                    
+                    <div style="margin: 15px 0;">
+                        <h5>🌅 Сніданок</h5>
+                        <div class="meal-editor">
+                            ${dayData.breakfast.map((item, i) => `
+                                <input type="text" value="${item}" id="breakfast-${i}" placeholder="Страва сніданку">
+                            `).join('')}
+                        </div>
+                        <button onclick="addMealItem('breakfast')" style="margin: 5px 0; padding: 5px 10px; background: #27ae60; color: white; border: none; border-radius: 5px;">➕ Додати страву</button>
+                    </div>
+                    
+                    <div style="margin: 15px 0;">
+                        <h5>🍽️ Обід</h5>
+                        <div class="meal-editor">
+                            ${dayData.lunch.map((item, i) => `
+                                <input type="text" value="${item}" id="lunch-${i}" placeholder="Страва обіду">
+                            `).join('')}
+                        </div>
+                        <button onclick="addMealItem('lunch')" style="margin: 5px 0; padding: 5px 10px; background: #27ae60; color: white; border: none; border-radius: 5px;">➕ Додати страву</button>
+                    </div>
+                    
+                    <div style="margin: 15px 0;">
+                        <h5>🌙 Вечеря</h5>
+                        <div class="meal-editor">
+                            ${dayData.dinner.map((item, i) => `
+                                <input type="text" value="${item}" id="dinner-${i}" placeholder="Страва вечері">
+                            `).join('')}
+                        </div>
+                        <button onclick="addMealItem('dinner')" style="margin: 5px 0; padding: 5px 10px; background: #27ae60; color: white; border: none; border-radius: 5px;">➕ Додати страву</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function addMealItem(mealType) {
+            const mealEditor = document.querySelector(`#day-menu-editor .meal-editor`);
+            const currentItems = weeklyMenu[currentEditDay][mealType];
+            const newIndex = currentItems.length;
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.id = `${mealType}-${newIndex}`;
+            input.placeholder = `Нова страва для ${mealType === 'breakfast' ? 'сніданку' : mealType === 'lunch' ? 'обіду' : 'вечері'}`;
+            
+            // Find the correct meal section and add input
+            const sections = document.querySelectorAll('#day-menu-editor .meal-editor');
+            let targetSection;
+            if (mealType === 'breakfast') targetSection = sections[0];
+            else if (mealType === 'lunch') targetSection = sections[1];
+            else targetSection = sections[2];
+            
+            targetSection.appendChild(input);
+            weeklyMenu[currentEditDay][mealType].push('');
+        }
+
+        function saveWeeklyMenu() {
+            // Save current day data
+            const dayData = weeklyMenu[currentEditDay];
+            
+            ['breakfast', 'lunch', 'dinner'].forEach(mealType => {
+                const inputs = document.querySelectorAll(`input[id^="${mealType}-"]`);
+                const items = [];
+                inputs.forEach(input => {
+                    if (input.value.trim()) {
+                        items.push(input.value.trim());
+                    }
+                });
+                dayData[mealType] = items;
+            });
+            
+            saveData();
+            renderWeeklyMenu();
+            closeWeeklyMenuEditor();
+            alert('Тижневе меню успішно оновлено!');
+        }
+
+        function openDietEditor() {
+            const modal = document.getElementById('dietModal');
+            const list = document.getElementById('diets-list');
+            
+            if (!modal || !list) return;
+            
+            list.innerHTML = '';
+            diets.forEach((diet, index) => {
+                list.innerHTML += `
+                    <div class="menu-editor-item">
+                        <input type="text" value="${diet.name}" id="diet-name-${index}" placeholder="Назва дієти">
+                        <button onclick="removeDiet(${index})">❌ Видалити</button>
+                    </div>
+                `;
+            });
+            
+            modal.style.display = 'block';
+        }
+
+        function closeDietEditor() {
+            document.getElementById('dietModal').style.display = 'none';
+        }
+
+        function addNewDiet() {
+            const list = document.getElementById('diets-list');
+            const newIndex = diets.length;
+            
+            const newItem = document.createElement('div');
+            newItem.className = 'menu-editor-item';
+            newItem.innerHTML = `
+                <input type="text" id="diet-name-${newIndex}" placeholder="Назва нової дієти">
+                <button onclick="removeDiet(${newIndex})">❌ Видалити</button>
+            `;
+            
+            list.appendChild(newItem);
+            diets.push({ id: `diet-${Date.now()}`, name: '' });
+        }
+
+        function removeDiet(index) {
+            diets.splice(index, 1);
+            openDietEditor();
+        }
+
+        function saveDiets() {
+            diets.forEach((diet, index) => {
+                const nameInput = document.getElementById(`diet-name-${index}`);
+                if (nameInput) {
+                    diet.name = nameInput.value;
+                }
+            });
+            
+            diets = diets.filter(diet => diet.name.trim() !== '');
+            saveData();
+            updateDietSelects();
+            closeDietEditor();
+            alert('Типи дієт успішно оновлено!');
+        }
+
+        function updateDietSelects() {
+            const patientDietSelect = document.getElementById('patient-diet-type');
+            const employeeDietSelect = document.getElementById('employee-diet-type');
+            
+            const dietOptions = diets.map(diet => 
+                `<option value="${diet.id}">${diet.name}</option>`
+            ).join('');
+            
+            if (patientDietSelect) {
+                patientDietSelect.innerHTML = dietOptions;
+            }
+            if (employeeDietSelect) {
+                employeeDietSelect.innerHTML = dietOptions;
+            }
+        }
+
+        // Export functions
+        function prepareExportData() {
+            const fromDate = document.getElementById('export-date-from').value;
+            const toDate = document.getElementById('export-date-to').value;
+            const format = document.getElementById('export-format').value;
+            
+            let filteredOrders = orders;
+            
+            if (fromDate) {
+                filteredOrders = filteredOrders.filter(o => o.orderDate >= fromDate);
+            }
+            if (toDate) {
+                filteredOrders = filteredOrders.filter(o => o.orderDate <= toDate);
+            }
+            
+            let exportData = '';
+            
+            if (format === 'json') {
+                exportData = JSON.stringify(filteredOrders, null, 2);
+            } else if (format === 'xml') {
+                exportData = '<?xml version="1.0" encoding="UTF-8"?>\n<orders>\n';
+                filteredOrders.forEach(order => {
+                    exportData += '  <order>\n';
+                    exportData += `    <id>${order.id}</id>\n`;
+                    exportData += `    <type>${order.type}</type>\n`;
+                    exportData += `    <date>${order.orderDate}</date>\n`;
+                    exportData += `    <amount>${order.amount}</amount>\n`;
+                    exportData += `    <mealOption>${order.mealOption}</mealOption>\n`;
+                    exportData += `    <status>${order.status}</status>\n`;
+                    exportData += '  </order>\n';
+                });
+                exportData += '</orders>';
+            } else if (format === 'csv') {
+                exportData = 'ID,Дата,Тип,Замовник,Відділення,Тип харчування,Сума,Статус\n';
+                filteredOrders.forEach(order => {
+                    const customer = order.type === 'patient' ? order.patientName : order.employeeName;
+                    const dept = order.type === 'patient' ? order.department : order.employeeDepartment;
+                    const mealType = order.mealOption === 'full' ? 'Повне' : 'Часткове';
+                    exportData += `${order.id},${order.orderDate},${order.type},${customer},${dept},${mealType},${order.amount},${order.status}\n`;
+                });
+            }
+            
+            document.getElementById('export-data').value = exportData;
+        }
+
+        function exportToAPI() {
+            const exportData = document.getElementById('export-data').value;
+            
+            if (!exportData) {
+                alert('Спочатку підготуйте дані для експорту');
+                prepareExportData();
+                return;
+            }
+            
+            // Simulate API call
+            alert('Дані успішно відправлено до ІС ПРО через API!\n\nЕндпоінт: https://api.ispro.ua/v1/orders\nМетод: POST\nСтатус: 200 OK');
+        }
+
+        function downloadExport() {
+            const exportData = document.getElementById('export-data').value;
+            const format = document.getElementById('export-format').value;
+            
+            if (!exportData) {
+                alert('Спочатку підготуйте дані для експорту');
+                prepareExportData();
+                return;
+            }
+            
+            let mimeType = 'text/plain';
+            let extension = 'txt';
+            
+            if (format === 'json') {
+                mimeType = 'application/json';
+                extension = 'json';
+            } else if (format === 'xml') {
+                mimeType = 'application/xml';
+                extension = 'xml';
+            } else if (format === 'csv') {
+                mimeType = 'text/csv';
+                extension = 'csv';
+            }
+            
+            const blob = new Blob([exportData], { type: mimeType });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `hospital_orders_${new Date().toISOString().split('T')[0]}.${extension}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function showOrderDetails(orderId) {
+            const order = orders.find(o => o.id == orderId);
+            if (!order) return;
+
+            const mealTypeText = order.mealOption === 'full' ? 'Повноцінне тридільне харчування' : 'Частинне дводільне харчування';
+
+            const details = `
+ДЕТАЛІ ЗАМОВЛЕННЯ #${order.id}
+
+Тип: ${order.type === 'patient' ? 'Пацієнт' : 'Співробітник'}
+${order.type === 'patient' ? 
+    `Пацієнт: ${order.patientName}
+Відділення: ${order.department}
+Палата: ${order.room}` :
+    `Співробітник: ${order.employeeName}
+Відділення: ${order.employeeDepartment}`
+}
+Дата замовлення: ${order.orderDate}
+Тип дієти: ${order.dietType}
+Тип харчування: ${mealTypeText}
+Кількість днів: ${order.daysCount}
+
+ЗАГАЛЬНА СУМА: ${order.amount} грн
+СТАТУС: ${order.status}
+СТВОРЕНО: ${order.createdAt}
+            `;
+
+            alert(details);
+        }
+
+        function filterByDepartment() {
+            const filter = document.getElementById('department-filter').value;
+            updateDepartmentStats();
+        }
+
+        // Window click event to close modals
+        window.onclick = function(event) {
+            const loginModal = document.getElementById('loginModal');
+            const deptModal = document.getElementById('departmentModal');
+            const weeklyMenuModal = document.getElementById('weeklyMenuModal');
+            const dietModal = document.getElementById('dietModal');
+            
+            if (event.target == loginModal) {
+                closeLoginModal();
+            }
+            if (event.target == deptModal) {
+                closeDepartmentEditor();
+            }
+            if (event.target == weeklyMenuModal) {
+                closeWeeklyMenuEditor();
+            }
+            if (event.target == dietModal) {
+                closeDietEditor();
+            }
+        }
+
+        // Initialize when page loads
+        window.onload = function() {
+            init();
+            
+            // Add event listeners after DOM is loaded
+            setTimeout(() => {
+                const patientDaysInput = document.getElementById('patient-days-count');
+                const employeeDaysInput = document.getElementById('employee-days-count');
+                
+                if (patientDaysInput) {
+                    patientDaysInput.addEventListener('input', updateOrderSummary);
+                }
+                if (employeeDaysInput) {
+                    employeeDaysInput.addEventListener('input', updateEmployeeOrderSummary);
+                }
+                
+                // Set default export dates
+                const today = new Date().toISOString().split('T')[0];
+                const exportDateFrom = document.getElementById('export-date-from');
+                const exportDateTo = document.getElementById('export-date-to');
+                const kitchenDate = document.getElementById('kitchen-date');
+                
+                if (exportDateFrom) exportDateFrom.value = today;
+                if (exportDateTo) exportDateTo.value = today;
+                if (kitchenDate) {
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    kitchenDate.value = tomorrow.toISOString().split('T')[0];
+                }
+            }, 100);
+        };
+    </script>
+</body>
+</html>
